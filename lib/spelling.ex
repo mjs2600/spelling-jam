@@ -4,12 +4,14 @@ defmodule Spelling do
   end
 
   def train(features) do
-    :gen_server.start { :local, Nwords }, Nwords, [], []
+    :gen_server.start_link { :local, Nwords }, Nwords, [], []
     Enum.each(features, fn(word) ->
       :gen_server.cast Nwords, { :add_word, word } end)
   end
 
-  def nwords, do: file |> words |> train
+  def nwords(key), do: :gen_server.call(Nwords, {:retrieve, key})
+  def nwords_has_key(key), do: :gen_server.call(Nwords, {:has_key, key})
+  def seed, do: file |> words |> train
 
   defp file do
     {:ok, text} = File.read("data/big.txt")
@@ -44,11 +46,11 @@ defmodule Spelling do
 
   def known_edits2(word) do
     Enum.map(edits1(word), fn(e1) -> Enum.filter(edits1(e1),
-                                            fn(item) -> Dict.has_key?(nwords, item) end) end)
+                                            fn(item) -> nwords_has_key(item) end) end)
   end
 
   def known(words) do
-    Enum.filter(words, fn(word) -> Dict.has_key?(nwords, word) end)
+    Enum.filter(words, fn(word) -> nwords_has_key(word) end)
   end
 
   def correct(word) do
@@ -63,7 +65,7 @@ defmodule Spelling do
     else
       candidates = [word]
     end
-    occurrences = Enum.map(candidates, fn(candidate) -> {candidate, Dict.fetch(nwords, candidate)} end)
+    occurrences = Enum.map(candidates, fn(candidate) -> {candidate, nwords(candidate)} end)
     sorted_occurrences = Enum.sort(occurrences, fn({_, count1}, {_, count2}) -> count1 > count2 end)
     [h|t] = sorted_occurrences
     {words,_} = h
@@ -74,3 +76,6 @@ defmodule Spelling do
     String.split("a b c d e f g h i j k l m n o p q r s t u v w x y z", " ")
   end
 end
+
+#Spelling.seed
+
