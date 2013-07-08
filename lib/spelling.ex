@@ -4,18 +4,9 @@ defmodule Spelling do
   end
 
   def train(features) do
-    train features, HashDict.new
-  end
-
-  def train([], acc) do
-    acc
-  end
-
-  def train(features, acc) do
-    [ h | t ] = features
-    current_count = acc[h]
-    new_count = (current_count || 0) + 1
-    train t, Dict.put(acc, h, new_count)
+    :gen_server.start { :local, Nwords }, Nwords, [], []
+    Enum.each(features, fn(word) ->
+      :gen_server.cast Nwords, { :add_word, word } end)
   end
 
   def nwords, do: file |> words |> train
