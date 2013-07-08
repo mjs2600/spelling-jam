@@ -13,6 +13,7 @@ defmodule Spelling do
 
   defp file do
     {:ok, text} = File.read("data/big.txt")
+    #"the big brown dog jumped over the lazy fox"
     text
   end
 
@@ -36,20 +37,40 @@ defmodule Spelling do
                end)
     inserts = Enum.map(s, fn({a, b}) -> Enum.map(alphabet, fn(c) ->
                                           "#{a}#{b}#{c}"
-                                       end
+                                       end)
                           end)
-    deletes ++ transposes ++ replaces ++ inserts # Might need to be a set
+    List.flatten(deletes ++ transposes ++ replaces ++ inserts) # Might need to be a set
   end
 
   def known_edits2(word) do
-    
+    Enum.map(edits1(word), fn(e1) -> Enum.filter(edits1(e1),
+                                            fn(item) -> Dict.has_key?(nwords, item) end) end)
   end
 
-  def correct(input) do
-    "access"
+  def known(words) do
+    Enum.filter(words, fn(word) -> Dict.has_key?(nwords, word) end)
+  end
+
+  def correct(word) do
+    if Enum.count(known(edits1(word))) > 0 do
+      candidates = known(edits1(word))
+    end
+    if Enum.count(known([word])) > 0 do
+      candidates = known([word])
+    end
+    if Enum.count(known_edits2(word)) > 0 do
+      candidates = known_edits2(word)
+    else
+      candidates = [word]
+    end
+    occurrences = Enum.map(candidates, fn(candidate) -> {candidate, Dict.fetch(nwords, candidate)} end)
+    sorted_occurrences = Enum.sort(occurrences, fn({_, count1}, {_, count2}) -> count1 > count2 end)
+    [h|t] = sorted_occurrences
+    {words,_} = h
+    words
   end
 
   defp alphabet do
-    "abcdefghijklmnopqrstuvwxyz"
+    String.split("a b c d e f g h i j k l m n o p q r s t u v w x y z", " ")
   end
 end
