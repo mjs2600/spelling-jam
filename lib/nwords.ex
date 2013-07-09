@@ -6,11 +6,11 @@ defmodule Nwords do
   end
 
   def handle_call({:retrieve, word}, _from, state) do
-    { :reply, state[word] }
+    { :reply, state[word], state }
   end
 
   def handle_call({:has_key, key}, _from, state) do
-    { :reply, Dict.has_key?(state, key) }
+    { :reply, Dict.has_key?(state, key), state }
   end
 
   def handle_cast({ :add_word, word }, state) do
